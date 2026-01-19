@@ -7,13 +7,36 @@ codes = true
 ignore = {
     "212",  -- Unused argument (common in event handlers)
     "213",  -- Unused loop variable
+    "221",  -- Variable never set (forward declarations)
+    "241",  -- Variable mutated but never accessed (UI element tables)
 }
 
 -- Global objects defined by this addon
 globals = {
     "WheresMyFeetDB",
     "SLASH_WMF1",
+    "SLASH_WHERESYMFEET1",
     "SlashCmdList",
+    "StaticPopupDialogs",  -- addon adds dialogs to this table
+
+    -- Frame names (auto-created children from slider templates)
+    "WheresMyFeetOptions",
+    "WMFYSlider",
+    "WMFYSliderText",
+    "WMFYSliderLow",
+    "WMFYSliderHigh",
+    "WMFSizeSlider",
+    "WMFSizeSliderText",
+    "WMFSizeSliderLow",
+    "WMFSizeSliderHigh",
+    "WMFEditorYSlider",
+    "WMFEditorYSliderText",
+    "WMFEditorYSliderLow",
+    "WMFEditorYSliderHigh",
+    "WMFEditorSizeSlider",
+    "WMFEditorSizeSliderText",
+    "WMFEditorSizeSliderLow",
+    "WMFEditorSizeSliderHigh",
 }
 
 -- WoW API globals (read-only)
@@ -25,6 +48,7 @@ read_globals = {
     "tremove",
     "wipe",
     "format",
+    "CopyTable",
 
     -- Frame and UI
     "CreateFrame",
@@ -39,6 +63,8 @@ read_globals = {
     "UIDropDownMenu_AddButton",
     "UIDropDownMenu_SetWidth",
     "UIDropDownMenu_SetText",
+    "UIDropDownMenu_SetSelectedValue",
+    "UIDropDownMenu_GetSelectedValue",
     "UIDropDownMenu_AddSeparator",
     "ToggleDropDownMenu",
     "CloseDropDownMenus",
@@ -77,6 +103,5 @@ read_globals = {
     "IsAddOnLoaded",
     "C_AddOns",
     "StaticPopup_Show",
-    "StaticPopupDialogs",
     "ReloadUI",
 }

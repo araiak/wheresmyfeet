@@ -216,7 +216,7 @@ tabFrame:SetPoint("TOPLEFT", 15, -35)
 tabFrame:SetSize(230, 25)
 
 local defaultsTab, zonesTab
-local defaultsContent, zonesContent
+local defaultsContent
 
 -- Current tab state
 local activeTab = "defaults"
@@ -896,7 +896,7 @@ end
 UIDropDownMenu_Initialize(zonePicker, InitZonePicker)
 
 -- Function to set dropdown to current zone
-local function SetDropdownToCurrentZone()
+SetDropdownToCurrentZone = function()
     local currentKey = GetCurrentZoneKey()
     local currentName = GetCurrentZoneName()
     if currentKey and currentName then

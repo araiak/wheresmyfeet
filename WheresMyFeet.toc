@@ -1,0 +1,7 @@
+## Interface: 110207, 120000, 120001
+## Title: Where's My Feet
+## Notes: Places a crosshair at your feet
+## Author: You
+## SavedVariables: WheresMyFeetDB
+
+WheresMyFeet.lua

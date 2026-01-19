@@ -3,3 +3,7 @@ WheresMyFeetDB.lua
 
 # Claude local settings
 .claude/
+
+# Screenshots and temp files
+*.png
+nul

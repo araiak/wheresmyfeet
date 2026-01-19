@@ -10,12 +10,41 @@ Download the latest release and extract the `WheresMyFeet` folder into your `Int
 
 Type `/wmf` in chat to open the options menu.
 
-### Options
+### Defaults Tab
+
+Configure your default crosshair settings:
 
 - **Y Offset** - Move the crosshair up or down
 - **Size** - Adjust the crosshair size
 - **Color** - Choose from presets (Green, Red, White, Yellow, Cyan) or click Custom for a full color picker
 - **Hide out of combat** - Only show the crosshair during combat (enabled by default)
+
+### Zone Overrides Tab
+
+Configure different crosshair settings for specific dungeons and raids. When you enter a zone with an override, those settings automatically apply. When you leave, settings revert to defaults.
+
+- **Enable zone overrides** - Master toggle for the feature
+- **Zone dropdown** - Select from S1 dungeons, discovered zones, or enter a zone ID manually
+- **Add Override** - Create an override for the selected zone
+- **Override list** - View, enable/disable, edit, or delete configured overrides
+
+Each override has the same settings as the defaults tab:
+- Y Offset
+- Size
+- Color
+- Hide out of combat
+
+Changes are saved automatically as you adjust values.
+
+## Slash Commands
+
+| Command | Description |
+|---------|-------------|
+| `/wmf` | Toggle the options panel |
+| `/wmf addzone <id> [name]` | Manually add a zone by ID |
+| `/wmf zone` | Show current zone info (for finding zone IDs) |
+| `/wmf debug` | Show debug info about current overrides |
+| `/wmf reset` | Reset all settings to defaults |
 
 ## Supported Versions
 

@@ -14,6 +14,7 @@ ignore = {
 -- Global objects defined by this addon
 globals = {
     "WheresMyFeetDB",
+    "WheresMyFeetCharDB",
     "SLASH_WMF1",
     "SLASH_WHERESYMFEET1",
     "SlashCmdList",
@@ -37,6 +38,7 @@ globals = {
     "WMFEditorSizeSliderText",
     "WMFEditorSizeSliderLow",
     "WMFEditorSizeSliderHigh",
+    "WMFEnabledCheck",
 }
 
 -- WoW API globals (read-only)

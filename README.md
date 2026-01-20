@@ -10,6 +10,10 @@ Download the latest release and extract the `WheresMyFeet` folder into your `Int
 
 Type `/wmf` in chat to open the options menu.
 
+### Per-Character Toggle
+
+At the top of the options panel is an **Enabled for this character** checkbox. This allows you to disable the addon for specific characters while keeping it enabled for others. The setting is saved per-character and defaults to enabled.
+
 ### Defaults Tab
 
 Configure your default crosshair settings:

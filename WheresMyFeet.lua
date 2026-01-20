@@ -1111,6 +1111,16 @@ SlashCmdList["WHERESYMFEET"] = function(msg)
         -- Show effective settings
         local eff = GetEffectiveSettings()
         print("|cFF00FF00WMF:|r Effective color: " .. table.concat(eff.color, ", "))
+    elseif cmd == "enable" then
+        WheresMyFeetCharDB.enabled = true
+        enabledCheck:SetChecked(true)
+        UpdateVisibility()
+        print("|cFF00FF00WMF:|r Enabled for this character")
+    elseif cmd == "disable" then
+        WheresMyFeetCharDB.enabled = false
+        enabledCheck:SetChecked(false)
+        UpdateVisibility()
+        print("|cFF00FF00WMF:|r Disabled for this character")
     elseif cmd == "reset" then
         WheresMyFeetDB = {
             defaults = CopyTable(defaults),

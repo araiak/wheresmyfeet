@@ -1,5 +1,5 @@
 ## Interface: 110207, 120000, 120001
-## Version: 1.0.3
+## Version: 1.0.4
 ## Title: Where's My Feet
 ## Notes: Places a crosshair at your feet
 ## Author: You

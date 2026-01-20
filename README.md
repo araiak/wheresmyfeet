@@ -45,6 +45,8 @@ Changes are saved automatically as you adjust values.
 | Command | Description |
 |---------|-------------|
 | `/wmf` | Toggle the options panel |
+| `/wmf enable` | Enable for this character |
+| `/wmf disable` | Disable for this character |
 | `/wmf addzone <id> [name]` | Manually add a zone by ID |
 | `/wmf zone` | Show current zone info (for finding zone IDs) |
 | `/wmf debug` | Show debug info about current overrides |

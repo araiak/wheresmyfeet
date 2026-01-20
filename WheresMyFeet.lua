@@ -38,6 +38,7 @@ local vLine = frame:CreateTexture(nil, "OVERLAY")
 -- Forward declarations for UI elements that need updating
 local ySlider, sizeSlider, combatCheck, yValue, sizeValue
 local zonesContent, SetDropdownToCurrentZone, RefreshOverrideList
+local enabledCheck
 
 -- Get current zone key (instanceMapID for dungeons/raids, nil for open world)
 local function GetCurrentZoneKey()
@@ -104,6 +105,13 @@ end
 local function UpdateVisibility()
     local settings = GetEffectiveSettings()
     local optionsOpen = WheresMyFeetOptions and WheresMyFeetOptions:IsShown()
+
+    -- Check if disabled for this character
+    if WheresMyFeetCharDB and not WheresMyFeetCharDB.enabled then
+        frame:Hide()
+        return
+    end
+
     if optionsOpen then
         frame:Show()
     elseif settings.hideOutOfCombat and not UnitAffectingCombat("player") then
@@ -210,9 +218,22 @@ title:SetText("Where's My Feet")
 local closeBtn = CreateFrame("Button", nil, options, "UIPanelCloseButton")
 closeBtn:SetPoint("TOPRIGHT", -5, -5)
 
+-- Enable checkbox (per-character)
+enabledCheck = CreateFrame("CheckButton", "WMFEnabledCheck", options, "UICheckButtonTemplate")
+enabledCheck:SetPoint("TOPLEFT", 15, -35)
+enabledCheck.text = enabledCheck:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+enabledCheck.text:SetPoint("LEFT", enabledCheck, "RIGHT", 5, 0)
+enabledCheck.text:SetText("Enabled for this character")
+enabledCheck:SetScript("OnClick", function(self)
+    if WheresMyFeetCharDB then
+        WheresMyFeetCharDB.enabled = self:GetChecked()
+        UpdateVisibility()
+    end
+end)
+
 -- Tab system
 local tabFrame = CreateFrame("Frame", nil, options)
-tabFrame:SetPoint("TOPLEFT", 15, -35)
+tabFrame:SetPoint("TOPLEFT", 15, -60)
 tabFrame:SetSize(230, 25)
 
 local defaultsTab, zonesTab
@@ -258,12 +279,12 @@ zonesTab = CreateTabButton("zones", "Zone Overrides", defaultsTab, 10)
 
 -- Content containers
 defaultsContent = CreateFrame("Frame", nil, options)
-defaultsContent:SetPoint("TOPLEFT", 15, -65)
-defaultsContent:SetSize(230, 320)
+defaultsContent:SetPoint("TOPLEFT", 15, -90)
+defaultsContent:SetSize(230, 295)
 
 zonesContent = CreateFrame("Frame", nil, options)
-zonesContent:SetPoint("TOPLEFT", 15, -65)
-zonesContent:SetSize(230, 320)
+zonesContent:SetPoint("TOPLEFT", 15, -90)
+zonesContent:SetSize(230, 295)
 zonesContent:Hide()
 
 -- Tab switching logic
@@ -1006,6 +1027,17 @@ loader:SetScript("OnEvent", function(self, event, addon)
             MigrateSettings()
         end
 
+        -- Initialize per-character DB if needed (defaults to enabled)
+        if not WheresMyFeetCharDB then
+            WheresMyFeetCharDB = {
+                enabled = true,
+            }
+        end
+        -- Ensure enabled key exists (for existing characters)
+        if WheresMyFeetCharDB.enabled == nil then
+            WheresMyFeetCharDB.enabled = true
+        end
+
         -- Ensure all default keys exist
         for k, v in pairs(defaults) do
             if WheresMyFeetDB.defaults[k] == nil then
@@ -1020,6 +1052,7 @@ loader:SetScript("OnEvent", function(self, event, addon)
         ySlider:SetValue(WheresMyFeetDB.defaults.yOffset)
         sizeSlider:SetValue(WheresMyFeetDB.defaults.lineLength)
         combatCheck:SetChecked(WheresMyFeetDB.defaults.hideOutOfCombat)
+        enabledCheck:SetChecked(WheresMyFeetCharDB.enabled)
         UpdateDefaultSwatch()
 
         -- Set initial tab
@@ -1085,11 +1118,15 @@ SlashCmdList["WHERESYMFEET"] = function(msg)
             enableZoneOverrides = false,
             knownZones = {},
         }
+        WheresMyFeetCharDB = {
+            enabled = true,
+        }
         UpdateCrosshair()
         UpdateVisibility()
         ySlider:SetValue(WheresMyFeetDB.defaults.yOffset)
         sizeSlider:SetValue(WheresMyFeetDB.defaults.lineLength)
         combatCheck:SetChecked(WheresMyFeetDB.defaults.hideOutOfCombat)
+        enabledCheck:SetChecked(WheresMyFeetCharDB.enabled)
         print("|cFF00FF00WMF:|r Settings reset to defaults")
     else
         if options:IsShown() then

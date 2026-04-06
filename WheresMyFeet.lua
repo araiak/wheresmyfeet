@@ -36,7 +36,7 @@ local hLine = frame:CreateTexture(nil, "OVERLAY")
 local vLine = frame:CreateTexture(nil, "OVERLAY")
 
 -- Forward declarations for UI elements that need updating
-local ySlider, sizeSlider, combatCheck, yValue, sizeValue
+local ySlider, sizeSlider, thicknessSlider, combatCheck, yValue, sizeValue, thicknessValue
 local zonesContent, SetDropdownToCurrentZone, RefreshOverrideList
 local enabledCheck
 
@@ -193,7 +193,7 @@ end)
 
 -- Options panel
 local options = CreateFrame("Frame", "WheresMyFeetOptions", UIParent, "BackdropTemplate")
-options:SetSize(260, 400)
+options:SetSize(260, 465)
 options:SetPoint("CENTER")
 options:SetBackdrop({
     bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
@@ -280,11 +280,11 @@ zonesTab = CreateTabButton("zones", "Zone Overrides", defaultsTab, 10)
 -- Content containers
 defaultsContent = CreateFrame("Frame", nil, options)
 defaultsContent:SetPoint("TOPLEFT", 15, -90)
-defaultsContent:SetSize(230, 295)
+defaultsContent:SetSize(230, 360)
 
 zonesContent = CreateFrame("Frame", nil, options)
 zonesContent:SetPoint("TOPLEFT", 15, -90)
-zonesContent:SetSize(230, 295)
+zonesContent:SetSize(230, 360)
 zonesContent:Hide()
 
 -- Tab switching logic
@@ -355,15 +355,37 @@ sizeSlider:SetScript("OnValueChanged", function(self, value)
     end
 end)
 
+-- Thickness slider
+thicknessSlider = CreateFrame("Slider", "WMFThicknessSlider", defaultsContent, "OptionsSliderTemplate")
+thicknessSlider:SetPoint("TOP", 0, -135)
+thicknessSlider:SetMinMaxValues(1, 10)
+thicknessSlider:SetValueStep(1)
+thicknessSlider:SetObeyStepOnDrag(true)
+thicknessSlider:SetWidth(180)
+WMFThicknessSliderText:SetText("Thickness")
+WMFThicknessSliderLow:SetText("1")
+WMFThicknessSliderHigh:SetText("10")
+
+thicknessValue = defaultsContent:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+thicknessValue:SetPoint("TOP", thicknessSlider, "BOTTOM", 0, -2)
+
+thicknessSlider:SetScript("OnValueChanged", function(self, value)
+    if WheresMyFeetDB and WheresMyFeetDB.defaults then
+        WheresMyFeetDB.defaults.lineThickness = value
+        thicknessValue:SetText(math.floor(value))
+        UpdateCrosshair()
+    end
+end)
+
 -- Color label and swatch
 local colorLabel = defaultsContent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-colorLabel:SetPoint("TOP", 0, -130)
+colorLabel:SetPoint("TOP", 0, -195)
 colorLabel:SetText("Color")
 
 -- Color preview swatch for defaults
 local defaultSwatchBg = defaultsContent:CreateTexture(nil, "ARTWORK")
 defaultSwatchBg:SetSize(20, 20)
-defaultSwatchBg:SetPoint("TOP", 50, -128)
+defaultSwatchBg:SetPoint("TOP", 50, -193)
 defaultSwatchBg:SetColorTexture(0, 1, 0, 1)
 
 local function UpdateDefaultSwatch()
@@ -430,7 +452,7 @@ end)
 
 -- Hide out of combat checkbox
 combatCheck = CreateFrame("CheckButton", "WMFCombatCheck", defaultsContent, "UICheckButtonTemplate")
-combatCheck:SetPoint("TOPLEFT", defaultsContent, "TOPLEFT", 10, -210)
+combatCheck:SetPoint("TOPLEFT", defaultsContent, "TOPLEFT", 10, -275)
 combatCheck.text = combatCheck:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 combatCheck.text:SetPoint("LEFT", combatCheck, "RIGHT", 5, 0)
 combatCheck.text:SetText("Hide out of combat")
@@ -1051,6 +1073,7 @@ loader:SetScript("OnEvent", function(self, event, addon)
         -- Initialize UI
         ySlider:SetValue(WheresMyFeetDB.defaults.yOffset)
         sizeSlider:SetValue(WheresMyFeetDB.defaults.lineLength)
+        thicknessSlider:SetValue(WheresMyFeetDB.defaults.lineThickness)
         combatCheck:SetChecked(WheresMyFeetDB.defaults.hideOutOfCombat)
         enabledCheck:SetChecked(WheresMyFeetCharDB.enabled)
         UpdateDefaultSwatch()
@@ -1135,6 +1158,7 @@ SlashCmdList["WHERESYMFEET"] = function(msg)
         UpdateVisibility()
         ySlider:SetValue(WheresMyFeetDB.defaults.yOffset)
         sizeSlider:SetValue(WheresMyFeetDB.defaults.lineLength)
+        thicknessSlider:SetValue(WheresMyFeetDB.defaults.lineThickness)
         combatCheck:SetChecked(WheresMyFeetDB.defaults.hideOutOfCombat)
         enabledCheck:SetChecked(WheresMyFeetCharDB.enabled)
         print("|cFF00FF00WMF:|r Settings reset to defaults")

@@ -7,22 +7,33 @@ local defaults = {
     hideOutOfCombat = true,
 }
 
--- S1 Season preset zones (dungeons + raids)
-local s1Zones = {
-    -- M+ Dungeons
-    [658]   = "Pit of Saron",
-    [1209]  = "Skyreach",
-    [1753]  = "Seat of the Triumvirate",
-    [2526]  = "Algeth'ar Academy",
-    [585]   = "Magisters' Terrace",
-    [16395] = "Maisara Caverns",
-    [16573] = "Nexus-Point Xenas",
-    [15808] = "Windrunner Spire",
+-- Season 2 preset zones (dungeons + raids), patch 12.1
+--
+-- Keys are instanceMapID exactly as returned by GetInstanceInfo(). A wrong ID fails
+-- silently -- the override simply never matches -- so only verified values belong here.
+-- Use /wmf zone while inside an instance to read its real ID. Anything missing from this
+-- list still works: entering an instance auto-discovers it into knownZones and it shows
+-- up in the zone picker.
+local seasonZones = {
+    -- New in 12.1
+    [16865] = "Altar of Fangs",
+
+    -- Midnight returnees
+    [16091] = "Murder Row",
+    [16368] = "Den of Nalorakk",
+    [16359] = "The Blinding Vale",
+    [16425] = "Voidscar Arena",
+
+    -- Legacy reworks. These are re-instanced for Midnight and carry NEW ids -- not the
+    -- originals (Ruby Life Pools 2521, Temple of Sethraliss 1877, Kings' Rest 1763).
+    -- Do not assume a returning dungeon keeps its old id; read it with /wmf zone.
+    [14063] = "Ruby Life Pools",
+    [9527]  = "Temple of Sethraliss",
+    [9526]  = "Kings' Rest",
 
     -- Raids
-    [16340] = "The Voidspire",
-    [16531] = "The Dreamrift",
-    [16342] = "Isle of Quel'Danas",
+    [16915] = "The Venomous Abyss",
+    [16671] = "Tidebound Grotto",
 }
 
 -- Track current zone for change detection
@@ -307,6 +318,45 @@ end
 defaultsTab:SetScript("OnClick", function() SetActiveTab("defaults") end)
 zonesTab:SetScript("OnClick", function() SetActiveTab("zones") end)
 
+-- Typeable value box for a slider. Replaces the read-only value label in the same spot,
+-- so no layout shifts and every existing `xValue:SetText(...)` call keeps working.
+-- Clamps to the slider's own range rather than hardcoded bounds, so the two cannot drift.
+local function AttachValueBox(slider, parent)
+    local box = CreateFrame("EditBox", nil, parent, "InputBoxTemplate")
+    box:SetSize(50, 20)
+    box:SetPoint("TOP", slider, "BOTTOM", 0, -2)
+    box:SetJustifyH("CENTER")
+    box:SetMaxLetters(6)
+    -- Without this the box grabs keyboard focus and swallows movement keys.
+    box:SetAutoFocus(false)
+    -- Deliberately NOT SetNumeric(true): it rejects "-", which Y Offset needs.
+
+    local function Commit()
+        local v = tonumber(box:GetText())
+        if v then
+            local lo, hi = slider:GetMinMaxValues()
+            slider:SetValue(math.floor(math.max(lo, math.min(hi, v))))
+        end
+        -- Re-read from the slider so junk input reverts to the real value
+        box:SetText(math.floor(slider:GetValue()))
+        box:ClearFocus()
+    end
+
+    box:SetScript("OnEnterPressed", Commit)
+    box:SetScript("OnEditFocusLost", Commit)
+    box:SetScript("OnEscapePressed", function()
+        box:SetText(math.floor(slider:GetValue()))
+        box:ClearFocus()
+    end)
+
+    -- Seed the text now: SetValue does not fire OnValueChanged when the value is already
+    -- current, so a saved value equal to the slider minimum would leave this box blank
+    -- (thickness defaults to 1 and its minimum is 1, so that is the common case).
+    box:SetText(math.floor(slider:GetValue()))
+
+    return box
+end
+
 -- ============================================================
 -- DEFAULTS TAB CONTENT
 -- ============================================================
@@ -315,15 +365,14 @@ zonesTab:SetScript("OnClick", function() SetActiveTab("zones") end)
 ySlider = CreateFrame("Slider", "WMFYSlider", defaultsContent, "OptionsSliderTemplate")
 ySlider:SetPoint("TOP", 0, -15)
 ySlider:SetMinMaxValues(-300, 100)
-ySlider:SetValueStep(5)
+ySlider:SetValueStep(1)
 ySlider:SetObeyStepOnDrag(true)
 ySlider:SetWidth(180)
 WMFYSliderText:SetText("Y Offset")
 WMFYSliderLow:SetText("-300")
 WMFYSliderHigh:SetText("100")
 
-yValue = defaultsContent:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-yValue:SetPoint("TOP", ySlider, "BOTTOM", 0, -2)
+yValue = AttachValueBox(ySlider, defaultsContent)
 
 ySlider:SetScript("OnValueChanged", function(self, value)
     if WheresMyFeetDB and WheresMyFeetDB.defaults then
@@ -344,8 +393,7 @@ WMFSizeSliderText:SetText("Size")
 WMFSizeSliderLow:SetText("5")
 WMFSizeSliderHigh:SetText("50")
 
-sizeValue = defaultsContent:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-sizeValue:SetPoint("TOP", sizeSlider, "BOTTOM", 0, -2)
+sizeValue = AttachValueBox(sizeSlider, defaultsContent)
 
 sizeSlider:SetScript("OnValueChanged", function(self, value)
     if WheresMyFeetDB and WheresMyFeetDB.defaults then
@@ -366,8 +414,7 @@ WMFThicknessSliderText:SetText("Thickness")
 WMFThicknessSliderLow:SetText("1")
 WMFThicknessSliderHigh:SetText("10")
 
-thicknessValue = defaultsContent:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-thicknessValue:SetPoint("TOP", thicknessSlider, "BOTTOM", 0, -2)
+thicknessValue = AttachValueBox(thicknessSlider, defaultsContent)
 
 thicknessSlider:SetScript("OnValueChanged", function(self, value)
     if WheresMyFeetDB and WheresMyFeetDB.defaults then
@@ -514,7 +561,7 @@ local editingZoneKey = nil
 
 -- Override editor (shown when editing)
 local editorFrame = CreateFrame("Frame", "WMFOverrideEditor", UIParent, "BackdropTemplate")
-editorFrame:SetSize(260, 280)
+editorFrame:SetSize(260, 340)
 editorFrame:SetPoint("CENTER")
 editorFrame:SetBackdrop({
     bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
@@ -541,15 +588,14 @@ editorCloseBtn:SetPoint("TOPRIGHT", -5, -5)
 local editorYSlider = CreateFrame("Slider", "WMFEditorYSlider", editorFrame, "OptionsSliderTemplate")
 editorYSlider:SetPoint("TOP", 0, -55)
 editorYSlider:SetMinMaxValues(-300, 100)
-editorYSlider:SetValueStep(5)
+editorYSlider:SetValueStep(1)
 editorYSlider:SetObeyStepOnDrag(true)
 editorYSlider:SetWidth(180)
 WMFEditorYSliderText:SetText("Y Offset")
 WMFEditorYSliderLow:SetText("-300")
 WMFEditorYSliderHigh:SetText("100")
 
-local editorYValue = editorFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-editorYValue:SetPoint("TOP", editorYSlider, "BOTTOM", 0, -2)
+local editorYValue = AttachValueBox(editorYSlider, editorFrame)
 
 -- Editor Size slider
 local editorSizeSlider = CreateFrame("Slider", "WMFEditorSizeSlider", editorFrame, "OptionsSliderTemplate")
@@ -562,18 +608,30 @@ WMFEditorSizeSliderText:SetText("Size")
 WMFEditorSizeSliderLow:SetText("5")
 WMFEditorSizeSliderHigh:SetText("50")
 
-local editorSizeValue = editorFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-editorSizeValue:SetPoint("TOP", editorSizeSlider, "BOTTOM", 0, -2)
+local editorSizeValue = AttachValueBox(editorSizeSlider, editorFrame)
+
+-- Editor Thickness slider (mirrors the defaults tab so overrides carry every setting)
+local editorThicknessSlider = CreateFrame("Slider", "WMFEditorThicknessSlider", editorFrame, "OptionsSliderTemplate")
+editorThicknessSlider:SetPoint("TOP", 0, -175)
+editorThicknessSlider:SetMinMaxValues(1, 10)
+editorThicknessSlider:SetValueStep(1)
+editorThicknessSlider:SetObeyStepOnDrag(true)
+editorThicknessSlider:SetWidth(180)
+WMFEditorThicknessSliderText:SetText("Thickness")
+WMFEditorThicknessSliderLow:SetText("1")
+WMFEditorThicknessSliderHigh:SetText("10")
+
+local editorThicknessValue = AttachValueBox(editorThicknessSlider, editorFrame)
 
 -- Editor Color label and swatch
 local editorColorLabel = editorFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-editorColorLabel:SetPoint("TOP", 0, -165)
+editorColorLabel:SetPoint("TOP", 0, -225)
 editorColorLabel:SetText("Color")
 
 -- Color preview swatch (positioned to the right of center)
 local swatchBg = editorFrame:CreateTexture(nil, "ARTWORK")
 swatchBg:SetSize(20, 20)
-swatchBg:SetPoint("TOP", 50, -163)
+swatchBg:SetPoint("TOP", 50, -223)
 swatchBg:SetColorTexture(0, 1, 0, 1)
 
 -- Editor color buttons row
@@ -626,7 +684,7 @@ local function SaveCurrentOverride()
     local override = db.zoneOverrides[editingZoneKey] or {}
 
     -- Get zone name
-    local zoneName = s1Zones[editingZoneKey] or (db.knownZones and db.knownZones[editingZoneKey]) or "Zone " .. editingZoneKey
+    local zoneName = seasonZones[editingZoneKey] or (db.knownZones and db.knownZones[editingZoneKey]) or "Zone " .. editingZoneKey
     override.name = zoneName
     if override.enabled == nil then
         override.enabled = true
@@ -635,6 +693,7 @@ local function SaveCurrentOverride()
     -- Save all values
     override.yOffset = editorValues.yOffset
     override.lineLength = editorValues.lineLength
+    override.lineThickness = editorValues.lineThickness
     override.color = editorValues.color and {unpack(editorValues.color)} or nil
     override.hideOutOfCombat = editorCombatCheck:GetChecked()
 
@@ -654,6 +713,15 @@ end)
 editorSizeSlider:SetScript("OnValueChanged", function(self, value)
     editorValues.lineLength = value
     editorSizeValue:SetText(math.floor(value))
+    if editingZoneKey then
+        SaveCurrentOverride()
+        UpdateCrosshair()
+    end
+end)
+
+editorThicknessSlider:SetScript("OnValueChanged", function(self, value)
+    editorValues.lineThickness = value
+    editorThicknessValue:SetText(math.floor(value))
     if editingZoneKey then
         SaveCurrentOverride()
         UpdateCrosshair()
@@ -723,7 +791,7 @@ GetEffectiveSettings = function()
             local preview = {
                 yOffset = editorValues.yOffset,
                 lineLength = editorValues.lineLength,
-                lineThickness = WheresMyFeetDB.defaults.lineThickness,
+                lineThickness = editorValues.lineThickness,
                 color = editorValues.color,
                 hideOutOfCombat = editorCombatCheck:GetChecked(),
             }
@@ -751,12 +819,14 @@ local function OpenEditor(zoneKey, zoneName)
         -- Load from existing override
         editorValues.yOffset = override.yOffset or defs.yOffset
         editorValues.lineLength = override.lineLength or defs.lineLength
+        editorValues.lineThickness = override.lineThickness or defs.lineThickness
         editorValues.color = override.color and {unpack(override.color)} or {unpack(defs.color)}
         editorCombatCheck:SetChecked(override.hideOutOfCombat ~= nil and override.hideOutOfCombat or defs.hideOutOfCombat)
     else
         -- New override - start with defaults
         editorValues.yOffset = defs.yOffset
         editorValues.lineLength = defs.lineLength
+        editorValues.lineThickness = defs.lineThickness
         editorValues.color = {unpack(defs.color)}
         editorCombatCheck:SetChecked(defs.hideOutOfCombat)
     end
@@ -764,6 +834,7 @@ local function OpenEditor(zoneKey, zoneName)
     -- Set UI values
     editorYSlider:SetValue(editorValues.yOffset)
     editorSizeSlider:SetValue(editorValues.lineLength)
+    editorThicknessSlider:SetValue(editorValues.lineThickness)
     UpdateEditorSwatch()
 
     editorFrame:Show()
@@ -877,7 +948,7 @@ local function InitZonePicker(self, level)
     end
 
     -- S1 Zones
-    for id, name in pairs(s1Zones) do
+    for id, name in pairs(seasonZones) do
         info = UIDropDownMenu_CreateInfo()
         info.text = name
         info.value = id
@@ -891,11 +962,13 @@ local function InitZonePicker(self, level)
         UIDropDownMenu_AddButton(info, level)
     end
 
-    -- Known zones (non-S1, with overrides)
+    -- Known zones outside the current season, but only ones actually configured.
+    -- knownZones accumulates every instance ever entered, so listing all of it buries
+    -- the season preset list under every dungeon from previous seasons.
     local hasKnown = false
     if db.knownZones then
         for id, name in pairs(db.knownZones) do
-            if not s1Zones[id] then
+            if not seasonZones[id] and db.zoneOverrides and db.zoneOverrides[id] then
                 if not hasKnown then
                     info = UIDropDownMenu_CreateInfo()
                     info.text = ""
@@ -906,10 +979,7 @@ local function InitZonePicker(self, level)
                 end
 
                 info = UIDropDownMenu_CreateInfo()
-                info.text = name
-                if db.zoneOverrides and db.zoneOverrides[id] then
-                    info.text = name .. " (configured)"
-                end
+                info.text = name .. " (configured)"
                 info.value = id
                 info.func = function()
                     UIDropDownMenu_SetSelectedValue(zonePicker, id)
@@ -961,7 +1031,7 @@ addOverrideBtn:SetScript("OnClick", function()
         return
     end
 
-    local zoneName = s1Zones[zoneKey]
+    local zoneName = seasonZones[zoneKey]
     if not zoneName then
         local db = WheresMyFeetDB
         zoneName = db.knownZones and db.knownZones[zoneKey]
@@ -983,7 +1053,7 @@ StaticPopupDialogs["WMF_ZONE_ID_INPUT"] = {
         if zoneId then
             local db = WheresMyFeetDB
             db.knownZones = db.knownZones or {}
-            local zoneName = db.knownZones[zoneId] or s1Zones[zoneId] or ("Zone " .. zoneId)
+            local zoneName = db.knownZones[zoneId] or seasonZones[zoneId] or ("Zone " .. zoneId)
             OpenEditor(zoneId, zoneName)
         else
             print("|cFF00FF00WMF:|r Invalid zone ID")

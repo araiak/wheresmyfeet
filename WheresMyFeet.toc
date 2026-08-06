@@ -1,5 +1,5 @@
-## Interface: 120005, 120007, 120100
-## Version: 1.0.7
+## Interface: 120100
+## Version: 1.0.8
 ## Title: Where's My Feet
 ## Notes: Places a crosshair at your feet
 ## Author: Araiak

@@ -38,7 +38,15 @@ globals = {
     "WMFEditorSizeSliderText",
     "WMFEditorSizeSliderLow",
     "WMFEditorSizeSliderHigh",
+    "WMFEditorThicknessSlider",
+    "WMFEditorThicknessSliderText",
+    "WMFEditorThicknessSliderLow",
+    "WMFEditorThicknessSliderHigh",
     "WMFEnabledCheck",
+    "WMFThicknessSlider",
+    "WMFThicknessSliderText",
+    "WMFThicknessSliderLow",
+    "WMFThicknessSliderHigh",
 }
 
 -- WoW API globals (read-only)
